@@ -1,3 +1,4 @@
 {
-  "prefix": "[{orange}ReviveSystem {default}- {green}REVIVE{default}]{default}"
+  "prefix": "[{orange}ReviveSystem {default}- {green}REVIVE{default}]{default}",
+  "NoPermissions": "You do not have the necessary permissions to use this command."
 }
