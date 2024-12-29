@@ -13,12 +13,14 @@ namespace ReviveSystem
     public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
         public override string ModuleName => "ReviveSystem";
-        public override string ModuleVersion => "0.1.0-beta";
+        public override string ModuleVersion => "0.1.1-beta";
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
 
         private static MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>? _cBasePlayerControllerSetPawnFunc;
         internal static readonly Dictionary<int, PlayerInfo> PlayersInfo = new();
+        private readonly Dictionary<int, DateTime> LastBeaconTimes = new();
+
         public required BaseConfigs Config { get; set; }
 
         public override void Load(bool hotReload)
@@ -52,14 +54,16 @@ namespace ReviveSystem
 
                 var playerInfo = PlayersInfo[player.UserId.Value];
 
-                if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
-                {
-                    player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveLimitReached"]}");
-                    continue;
-                }
-
                 if (player.Buttons.HasFlag(PlayerButtons.Use))
                 {
+                    if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
+                    {
+                        if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
+                        {
+                            player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveLimitReached"]}");
+                            continue;
+                        }
+                    }
 
                     if (!playerInfo.UseStartTime.HasValue)
                     {
@@ -72,7 +76,13 @@ namespace ReviveSystem
                             player.PlayerPawn?.Value != null &&
                             CalculateDistance(player.PlayerPawn.Value.AbsOrigin, targetPlayer.DiePosition.Value.Position) <= Config.ReviveRange)
                         {
-                            DrawBeaconOnPlayer(player);
+                            int playerId = player.UserId.Value;
+
+                            if (!LastBeaconTimes.ContainsKey(playerId) || (DateTime.Now - LastBeaconTimes[playerId]).TotalMilliseconds >= 1000)
+                            {
+                                DrawBeaconOnPlayer(player);
+                                LastBeaconTimes[playerId] = DateTime.Now;
+                            }
 
                             var pressDuration = (DateTime.Now - playerInfo.UseStartTime.Value).TotalSeconds;
 
@@ -81,13 +91,16 @@ namespace ReviveSystem
                             var emptyLength = progressBarLength - filledLength;
                             var progressBar = new string('|', filledLength) + new string('-', emptyLength);
                             var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
+
                             player.PrintToCenterHtml($"{Localizer["prefix"]} {Localizer["Reviving"]}: [{progressBar}] {percentage}%");
 
                             if (pressDuration >= Config.ReviveTime && CanRevive(player, targetPlayer))
                             {
-                                player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveComplete"]} {targetPlayer.Name}.");
+                                player.PrintToChat($"{Localizer["prefix"]} {string.Format(Localizer["ReviveComplete"], targetPlayer.Name)}");
                                 RespawnPlayer(player, targetPlayer);
                                 playerInfo.UseStartTime = null;
+
+                                playerInfo.ReviveCount++;
                                 break;
                             }
                         }

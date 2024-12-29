@@ -88,14 +88,14 @@ namespace ReviveSystem
                 radius += 10;
             }, TimerFlags.REPEAT);
 
-            // PlaySoundOnPlayer(player, "sounds/tools/sfm/beep.vsnd_c");
+            PlaySoundOnPlayer(player, "sounds/tools/sfm/beep.vsnd_c");
         }
 
-        // private void PlaySoundOnPlayer(CCSPlayerController? player, string sound)
-        // {
-        //     if (player == null || !player.IsValid) return;
-        //     player.ExecuteClientCommand($"play {sound}");
-        // }
+        private void PlaySoundOnPlayer(CCSPlayerController? player, string sound)
+        {
+            if (player == null || !player.IsValid) return;
+            player.ExecuteClientCommand($"play {sound}");
+        }
 
         private static readonly Vector VectorZero = new Vector(0, 0, 0);
         private static readonly QAngle RotationZero = new QAngle(0, 0, 0);
