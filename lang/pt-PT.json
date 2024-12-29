@@ -1,0 +1,8 @@
+{
+  "prefix": "[{orange}ReviveSystem {default}- {green}REVIVER{default}]{default}",
+  "Reviving": "Reanimando...",
+  "ReviveComplete": "Você reanimou com sucesso {0}!",
+  "ReviveCancelled": "Você cancelou a reanimação do seu companheiro.",
+  "ReviveLimitReached": "Você atingiu o limite de reanimações permitidas nesta rodada.",
+  "NoPermissions": "Você não tem as permissões necessárias para realizar esta ação."
+}

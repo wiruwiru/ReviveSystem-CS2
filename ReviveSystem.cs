@@ -2,112 +2,190 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Admin;
-using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
-using System;
-using System.Collections.Generic;
+using static CounterStrikeSharp.API.Core.Listeners;
 
-namespace ReviveSystem;
-
-[MinimumApiVersion(296)]
-public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
+namespace ReviveSystem
 {
-    public override string ModuleName => "ReviveSystem";
-    public override string ModuleVersion => "1.0.0";
-    public override string ModuleAuthor => "luca.uy";
-    public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
-
-    private static MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>? _cBasePlayerControllerSetPawnFunc;
-    internal static readonly Dictionary<int, PlayerInfo> PlayersInfo = new();
-
-    public override void Load(bool hotReload)
+    [MinimumApiVersion(296)]
+    public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
-        _cBasePlayerControllerSetPawnFunc = new MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>(
-            GameData.GetSignature("CBasePlayerController_SetPawn")
-        );
+        public override string ModuleName => "ReviveSystem";
+        public override string ModuleVersion => "0.1.0-beta";
+        public override string ModuleAuthor => "luca.uy";
+        public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
 
-        AddCommand(Config.Command, "", (player, info) =>
+        private static MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>? _cBasePlayerControllerSetPawnFunc;
+        internal static readonly Dictionary<int, PlayerInfo> PlayersInfo = new();
+        public required BaseConfigs Config { get; set; }
+
+        public override void Load(bool hotReload)
         {
-            if (player == null)
+
+            _cBasePlayerControllerSetPawnFunc = new MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>(
+                GameData.GetSignature("CBasePlayerController_SetPawn")
+            );
+
+            RegisterListener<OnTick>(OnTick);
+        }
+
+        public override void Unload(bool hotReload)
+        {
+            RemoveListener<OnTick>(OnTick);
+        }
+
+        private void OnTick()
+        {
+            foreach (var player in Utilities.GetPlayers())
             {
-                return;
+                if (!player.IsValid || player.IsBot || !player.UserId.HasValue || !PlayersInfo.ContainsKey(player.UserId.Value))
+                {
+                    continue;
+                }
+
+                if (!player.PawnIsAlive)
+                {
+                    continue;
+                }
+
+                var playerInfo = PlayersInfo[player.UserId.Value];
+
+                if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
+                {
+                    player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveLimitReached"]}");
+                    continue;
+                }
+
+                if (player.Buttons.HasFlag(PlayerButtons.Use))
+                {
+
+                    if (!playerInfo.UseStartTime.HasValue)
+                    {
+                        playerInfo.UseStartTime = DateTime.Now;
+                    }
+
+                    foreach (var targetPlayer in PlayersInfo.Values)
+                    {
+                        if (targetPlayer.DiePosition.HasValue &&
+                            player.PlayerPawn?.Value != null &&
+                            CalculateDistance(player.PlayerPawn.Value.AbsOrigin, targetPlayer.DiePosition.Value.Position) <= Config.ReviveRange)
+                        {
+                            DrawBeaconOnPlayer(player);
+
+                            var pressDuration = (DateTime.Now - playerInfo.UseStartTime.Value).TotalSeconds;
+
+                            var progressBarLength = 20;
+                            var filledLength = (int)(progressBarLength * (pressDuration / Config.ReviveTime));
+                            var emptyLength = progressBarLength - filledLength;
+                            var progressBar = new string('|', filledLength) + new string('-', emptyLength);
+                            var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
+                            player.PrintToCenterHtml($"{Localizer["prefix"]} {Localizer["Reviving"]}: [{progressBar}] {percentage}%");
+
+                            if (pressDuration >= Config.ReviveTime && CanRevive(player, targetPlayer))
+                            {
+                                player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveComplete"]} {targetPlayer.Name}.");
+                                RespawnPlayer(player, targetPlayer);
+                                playerInfo.UseStartTime = null;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (playerInfo.UseStartTime.HasValue)
+                    {
+                        player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveCancelled"]}");
+                    }
+                    playerInfo.UseStartTime = null;
+                }
+            }
+        }
+
+        private float CalculateDistance(Vector? a, Vector? b)
+        {
+            if (a == null || b == null)
+            {
+                return float.MaxValue;
             }
 
-            var validador = new RequiresPermissions(Config.UseFlag);
-            validador.Command = Config.Command;
-            if (!validador.CanExecuteCommand(player))
+            var distance = MathF.Sqrt(MathF.Pow(a.X - b.X, 2) + MathF.Pow(a.Y - b.Y, 2) + MathF.Pow(a.Z - b.Z, 2));
+            return distance;
+        }
+
+        private bool CanRevive(CCSPlayerController player, PlayerInfo targetPlayer)
+        {
+            if (!string.IsNullOrEmpty(Config.PermissionFlag) &&
+                !AdminManager.PlayerHasPermissions(player, Config.PermissionFlag))
             {
                 player.PrintToChat($"{Localizer["prefix"]} {Localizer["NoPermissions"]}");
+                return false;
+            }
+
+            if (!player.PawnIsAlive)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public void RespawnPlayer(CCSPlayerController caller, PlayerInfo targetPlayerInfo)
+        {
+
+            var player = Utilities.GetPlayers().FirstOrDefault(p => p.UserId == targetPlayerInfo.UserId);
+            if (player == null || player.PlayerPawn?.Value == null || !player.PlayerPawn.IsValid)
+            {
                 return;
             }
 
-            RespawnPlayer(player, player);
-        });
-    }
+            var playerPawn = player.PlayerPawn.Value;
+            _cBasePlayerControllerSetPawnFunc?.Invoke(player, playerPawn, true, false);
 
-    public void RespawnPlayer(CCSPlayerController caller, CCSPlayerController player)
-    {
-        if (player == null || player.UserId == null || !PlayersInfo.ContainsKey(player.UserId.Value))
-        {
-            return;
+            VirtualFunction.CreateVoid<CCSPlayerController>(player.Handle, GameData.GetOffset("CCSPlayerController_Respawn"))(player);
+
+            if (targetPlayerInfo.DiePosition.HasValue)
+            {
+                var diePosition = targetPlayerInfo.DiePosition.Value;
+                playerPawn.Teleport(diePosition.Position, diePosition.Angle);
+            }
+
+            targetPlayerInfo.DiePosition = null;
         }
 
-        var playerInfo = PlayersInfo[player.UserId.Value];
-
-        if (player.PlayerPawn.Value == null || !player.PlayerPawn.IsValid)
+        public void OnConfigParsed(BaseConfigs config)
         {
-            return;
+            Config = config;
         }
 
-        var playerPawn = player.PlayerPawn.Value;
-        _cBasePlayerControllerSetPawnFunc?.Invoke(player, playerPawn, true, false);
-
-        VirtualFunction.CreateVoid<CCSPlayerController>(player.Handle, GameData.GetOffset("CCSPlayerController_Respawn"))(player);
-
-        if (playerInfo.DiePosition.HasValue)
+        public class PlayerInfo
         {
-            var diePosition = playerInfo.DiePosition.Value;
-            playerPawn.Teleport(diePosition.Position, diePosition.Angle);
+            public int? UserId { get; }
+            public string Name { get; }
+            public DiePosition? DiePosition { get; set; }
+            public int ReviveCount { get; set; } = 0;
+            public DateTime? UseStartTime { get; set; }
+
+            public PlayerInfo(int? userId, string name)
+            {
+                UserId = userId;
+                Name = name;
+                DiePosition = null;
+                UseStartTime = null;
+            }
         }
-        else
+
+        public struct DiePosition
         {
-            Console.WriteLine($"[ReviveSystem] No stored death position found for #{player.UserId}.");
-        }
-    }
-
-
-    public required BaseConfigs Config { get; set; }
-
-    public void OnConfigParsed(BaseConfigs config)
-    {
-        Config = config;
-    }
-
-    public class PlayerInfo
-    {
-        public int? UserId { get; }
-        public string Name { get; }
-        public DiePosition? DiePosition { get; set; }
-
-        public PlayerInfo(int? userId, string name)
-        {
-            UserId = userId;
-            Name = name;
-            DiePosition = null;
-        }
-    }
-
-    public struct DiePosition
-    {
-        public Vector Position { get; set; }
-        public QAngle Angle { get; set; }
-
-        public DiePosition(Vector position, QAngle angle)
-        {
-            Position = position;
-            Angle = angle;
+            public Vector Position { get; set; }
+            public QAngle Angle { get; set; }
+            public DiePosition(Vector position, QAngle angle)
+            {
+                Position = position;
+                Angle = angle;
+            }
         }
     }
 }

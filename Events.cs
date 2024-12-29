@@ -48,6 +48,7 @@ public partial class ReviveSystemBase
         foreach (var player in PlayersInfo.Values)
         {
             player.DiePosition = null;
+            player.ReviveCount = 0;
         }
 
         return HookResult.Continue;
