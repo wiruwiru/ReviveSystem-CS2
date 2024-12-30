@@ -13,7 +13,7 @@ namespace ReviveSystem
     public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
         public override string ModuleName => "ReviveSystem";
-        public override string ModuleVersion => "0.1.2-beta";
+        public override string ModuleVersion => "0.1.3-beta";
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
 
@@ -117,10 +117,10 @@ namespace ReviveSystem
                                 var progressBarLength = 20;
                                 var filledLength = (int)(progressBarLength * (pressDuration / Config.ReviveTime));
                                 var emptyLength = progressBarLength - filledLength;
-                                var progressBar = new string('|', filledLength) + new string('-', emptyLength);
+                                var progressBar = new string('▌', filledLength) + new string('░', emptyLength);
                                 var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
 
-                                player.PrintToCenterHtml($"{Localizer["prefix"]} {string.Format(Localizer["Reviving"], targetPlayer.Name)}: [{progressBar}] {percentage}%");
+                                player.PrintToCenterHtml($"{Localizer["prefix"]} {string.Format(Localizer["Reviving"], targetPlayer.Name)}: 『{progressBar}』 {percentage}%");
                                 LastUpdateTimes[playerId] = DateTime.Now;
                             }
 
