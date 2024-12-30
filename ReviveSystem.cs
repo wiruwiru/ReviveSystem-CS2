@@ -63,18 +63,17 @@ namespace ReviveSystem
                     {
                         var currentTime = DateTime.Now;
                         var cooldownTime = TimeSpan.FromSeconds(1);
+
                         if (!playerInfo.LastReviveLimitMessageTime.HasValue || (currentTime - playerInfo.LastReviveLimitMessageTime.Value) >= cooldownTime)
                         {
-                            if (targetPlayerEntity == null)
-                            {
-
-                            }
-                            else
+                            if (targetPlayerEntity != null)
                             {
                                 player.PrintToChat($"{Localizer["prefix"]} {Localizer["DifferentTeam"]}");
                             }
+
                             playerInfo.LastReviveLimitMessageTime = currentTime;
                         }
+
                         playerInfo.UseStartTime = null;
                         return;
                     }
