@@ -1,8 +1,9 @@
 {
   "prefix": "[{orange}ReviveSystem {default}- {green}ВОСКРЕШЕНИЕ{default}]{default}",
-  "Reviving": "Воскрешение",
+  "Reviving": "Воскрешение {0}",
   "ReviveComplete": "Вы успешно воскресили {0}!",
   "ReviveCancelled": "Вы прекратили воскрешение союзника.",
   "ReviveLimitReached": "Вы достигли лимита воскрешений для этого раунда.",
+  "DifferentTeam": "Вы можете воскрешать, только союзников из своей команды.",
   "NoPermissions": "У вас недостаточно прав для выполнения этого действия."
 }

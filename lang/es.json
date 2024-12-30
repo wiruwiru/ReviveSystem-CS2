@@ -1,8 +1,9 @@
 {
   "prefix": "[{orange}ReviveSystem {default}- {green}REVIVIR{default}]{default}",
-  "Reviving": "Reanimando",
+  "Reviving": "Reanimando a {0}",
   "ReviveComplete": "¡Has reanimado con éxito a {0}!",
   "ReviveCancelled": "Has cancelado la reanimación de tu compañero.",
   "ReviveLimitReached": "Has alcanzado el límite de reanimaciones permitidas en esta ronda.",
+  "DifferentTeam": "Solo puedes reanimar a compañeros de tu mismo equipo.",
   "NoPermissions": "No tienes los permisos necesarios para realizar esta acción."
 }

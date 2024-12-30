@@ -1,8 +1,9 @@
 {
   "prefix": "[{orange}ReviveSystem {default}- {green}REVIVE{default}]{default}",
-  "Reviving": "Reviving",
+  "Reviving": "Reviving {0}",
   "ReviveComplete": "You successfully revived {0}!",
   "ReviveCancelled": "You stopped reviving your teammate.",
   "ReviveLimitReached": "You have reached the revive limit for this round.",
+  "DifferentTeam": "You can only revive teammates from the same team.",
   "NoPermissions": "You do not have the required permissions to perform this action."
 }

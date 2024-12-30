@@ -13,13 +13,14 @@ namespace ReviveSystem
     public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
         public override string ModuleName => "ReviveSystem";
-        public override string ModuleVersion => "0.1.1-beta";
+        public override string ModuleVersion => "0.1.2-beta";
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
 
         private static MemoryFunctionVoid<CBasePlayerController, CCSPlayerPawn, bool, bool>? _cBasePlayerControllerSetPawnFunc;
         internal static readonly Dictionary<int, PlayerInfo> PlayersInfo = new();
         private readonly Dictionary<int, DateTime> LastBeaconTimes = new();
+        private readonly Dictionary<int, DateTime> LastUpdateTimes = new();
 
         public required BaseConfigs Config { get; set; }
 
@@ -56,13 +57,39 @@ namespace ReviveSystem
 
                 if (player.Buttons.HasFlag(PlayerButtons.Use))
                 {
+
+                    var targetPlayerEntity = Utilities.GetPlayers().FirstOrDefault(p => PlayersInfo.Values.Any(t => t.UserId == p.UserId && t.DiePosition.HasValue));
+                    if (targetPlayerEntity == null || targetPlayerEntity.TeamNum != player.TeamNum)
+                    {
+                        var currentTime = DateTime.Now;
+                        var cooldownTime = TimeSpan.FromSeconds(1);
+                        if (!playerInfo.LastReviveLimitMessageTime.HasValue || (currentTime - playerInfo.LastReviveLimitMessageTime.Value) >= cooldownTime)
+                        {
+                            if (targetPlayerEntity == null)
+                            {
+
+                            }
+                            else
+                            {
+                                player.PrintToChat($"{Localizer["prefix"]} {Localizer["DifferentTeam"]}");
+                            }
+                            playerInfo.LastReviveLimitMessageTime = currentTime;
+                        }
+                        playerInfo.UseStartTime = null;
+                        return;
+                    }
+
                     if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
                     {
-                        if (playerInfo.ReviveCount >= Config.MaxRevivesPerRound)
+                        var currentTime = DateTime.Now;
+                        var cooldownTime = TimeSpan.FromSeconds(1);
+                        if (!playerInfo.LastReviveLimitMessageTime.HasValue || (currentTime - playerInfo.LastReviveLimitMessageTime.Value) >= cooldownTime)
                         {
                             player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveLimitReached"]}");
-                            continue;
+                            playerInfo.LastReviveLimitMessageTime = currentTime;
                         }
+                        playerInfo.UseStartTime = null;
+                        continue;
                     }
 
                     if (!playerInfo.UseStartTime.HasValue)
@@ -86,13 +113,17 @@ namespace ReviveSystem
 
                             var pressDuration = (DateTime.Now - playerInfo.UseStartTime.Value).TotalSeconds;
 
-                            var progressBarLength = 20;
-                            var filledLength = (int)(progressBarLength * (pressDuration / Config.ReviveTime));
-                            var emptyLength = progressBarLength - filledLength;
-                            var progressBar = new string('|', filledLength) + new string('-', emptyLength);
-                            var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
+                            if (!LastUpdateTimes.ContainsKey(playerId) || (DateTime.Now - LastUpdateTimes[playerId]).TotalMilliseconds >= 40)
+                            {
+                                var progressBarLength = 20;
+                                var filledLength = (int)(progressBarLength * (pressDuration / Config.ReviveTime));
+                                var emptyLength = progressBarLength - filledLength;
+                                var progressBar = new string('|', filledLength) + new string('-', emptyLength);
+                                var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
 
-                            player.PrintToCenterHtml($"{Localizer["prefix"]} {Localizer["Reviving"]}: [{progressBar}] {percentage}%");
+                                player.PrintToCenterHtml($"{Localizer["prefix"]} {string.Format(Localizer["Reviving"], targetPlayer.Name)}: [{progressBar}] {percentage}%");
+                                LastUpdateTimes[playerId] = DateTime.Now;
+                            }
 
                             if (pressDuration >= Config.ReviveTime && CanRevive(player, targetPlayer))
                             {
@@ -110,9 +141,20 @@ namespace ReviveSystem
                 {
                     if (playerInfo.UseStartTime.HasValue)
                     {
-                        player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveCancelled"]}");
+                        bool hasValidTarget = PlayersInfo.Values.Any(targetPlayer =>
+                            targetPlayer.DiePosition.HasValue &&
+                            player.PlayerPawn?.Value != null &&
+                            CalculateDistance(player.PlayerPawn.Value.AbsOrigin, targetPlayer.DiePosition.Value.Position) <= Config.ReviveRange
+                        );
+
+                        if (hasValidTarget)
+                        {
+                            player.PrintToChat($"{Localizer["prefix"]} {Localizer["ReviveCancelled"]}");
+                        }
+
+                        playerInfo.UseStartTime = null;
                     }
-                    playerInfo.UseStartTime = null;
+
                 }
             }
         }
@@ -180,6 +222,7 @@ namespace ReviveSystem
             public DiePosition? DiePosition { get; set; }
             public int ReviveCount { get; set; } = 0;
             public DateTime? UseStartTime { get; set; }
+            public DateTime? LastReviveLimitMessageTime { get; set; }
 
             public PlayerInfo(int? userId, string name)
             {
@@ -187,6 +230,7 @@ namespace ReviveSystem
                 Name = name;
                 DiePosition = null;
                 UseStartTime = null;
+                LastReviveLimitMessageTime = null;
             }
         }
 

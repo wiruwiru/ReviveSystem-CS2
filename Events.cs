@@ -53,4 +53,16 @@ public partial class ReviveSystemBase
 
         return HookResult.Continue;
     }
+
+    [GameEventHandler]
+    public HookResult OnPlayerFullConnect(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        foreach (var player in PlayersInfo.Values)
+        {
+            player.DiePosition = null;
+            player.ReviveCount = 0;
+        }
+
+        return HookResult.Continue;
+    }
 }
