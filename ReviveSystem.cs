@@ -120,7 +120,8 @@ namespace ReviveSystem
                                 var progressBar = new string('▌', filledLength) + new string('░', emptyLength);
                                 var percentage = (int)((pressDuration / Config.ReviveTime) * 100);
 
-                                player.PrintToCenterHtml($"{Localizer["prefix"]} {string.Format(Localizer["Reviving"], targetPlayer.Name)}: 『{progressBar}』 {percentage}%");
+                                // player.PrintToCenterHtml($"{Localizer["prefix"]} {string.Format(Localizer["Reviving"], targetPlayer.Name)}: 『{progressBar}』 {percentage}%");
+                                player.PrintToCenterHtml($"{string.Format(Localizer["Reviving"], targetPlayer.Name)} 『{progressBar}』 {percentage}%");
                                 LastUpdateTimes[playerId] = DateTime.Now;
                             }
 
