@@ -1,6 +1,12 @@
 # ReviveSystem CS2
 > Allows players to revive one of their teammates per round by holding “E” on the dead teammate.. (for CounterStrikeSharp)
 
+### 💖 Revive preview
+https://github.com/user-attachments/assets/f197f07f-ed26-4580-9e37-e85e86607e06
+
+### ✋ Revive limit
+https://github.com/user-attachments/assets/9f2813f7-a885-4289-8593-d2c87a6321d5
+
 ## ⚙️ Installation
 1. Install [CounterStrike Sharp](https://github.com/roflmuffin/CounterStrikeSharp) and [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master).
 
