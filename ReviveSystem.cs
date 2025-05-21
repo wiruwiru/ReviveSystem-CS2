@@ -13,7 +13,7 @@ namespace ReviveSystem
     public partial class ReviveSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
         public override string ModuleName => "ReviveSystem";
-        public override string ModuleVersion => "0.1.3-beta";
+        public override string ModuleVersion => "0.1.4-beta";
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleDescription => "Allows players to revive one of their teammates per round.";
 
@@ -172,11 +172,21 @@ namespace ReviveSystem
 
         private bool CanRevive(CCSPlayerController player, PlayerInfo targetPlayer)
         {
-            if (!string.IsNullOrEmpty(Config.PermissionFlag) &&
-                !AdminManager.PlayerHasPermissions(player, Config.PermissionFlag))
+            if (!string.IsNullOrEmpty(Config.CanReviveOthersFlag) &&
+                !AdminManager.PlayerHasPermissions(player, Config.CanReviveOthersFlag))
             {
                 player.PrintToChat($"{Localizer["prefix"]} {Localizer["NoPermissions"]}");
                 return false;
+            }
+
+            if (!string.IsNullOrEmpty(Config.CanBeRevivedFlag))
+            {
+                var targetPlayerController = Utilities.GetPlayers().FirstOrDefault(p => p.UserId == targetPlayer.UserId);
+                if (targetPlayerController == null || !AdminManager.PlayerHasPermissions(targetPlayerController, Config.CanBeRevivedFlag))
+                {
+                    player.PrintToChat($"{Localizer["prefix"]} {string.Format(Localizer["TargetNoPermissions"], targetPlayer.Name)}");
+                    return false;
+                }
             }
 
             if (!player.PawnIsAlive)

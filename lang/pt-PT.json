@@ -5,5 +5,6 @@
   "ReviveCancelled": "Você cancelou a reanimação do seu companheiro.",
   "ReviveLimitReached": "Você atingiu o limite de reanimações permitidas nesta rodada.",
   "DifferentTeam": "Você só pode reanimar companheiros de equipe.",
-  "NoPermissions": "Você não tem as permissões necessárias para realizar esta ação."
+  "NoPermissions": "Você não tem as permissões necessárias para realizar esta ação.",
+  "TargetNoPermissions": "{0} não tem permissão para ser revivido."
 }

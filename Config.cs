@@ -5,8 +5,11 @@ namespace ReviveSystem;
 
 public class BaseConfigs : BasePluginConfig
 {
-    [JsonPropertyName("PermissionFlag")]
-    public string PermissionFlag { get; set; } = "@css/vip";
+    [JsonPropertyName("CanReviveOthersFlag")]
+    public string CanReviveOthersFlag { get; set; } = "@css/vip";
+
+    [JsonPropertyName("CanBeRevivedFlag")]
+    public string CanBeRevivedFlag { get; set; } = "";
 
     [JsonPropertyName("ReviveTime")]
     public int ReviveTime { get; set; } = 15;

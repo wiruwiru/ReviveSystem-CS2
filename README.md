@@ -21,17 +21,20 @@ https://github.com/user-attachments/assets/9f2813f7-a885-4289-8593-d2c87a6321d5
 ## 📁 Configuration
 The configuration file (`ReviveSystem.json`) will be auto-generated after the first launch.
 
+| Parameter            | Description                                                                                       | Default |
+|----------------------|---------------------------------------------------------------------------------------------------|----------|
+| `CanReviveOthersFlag` | Permission needed for a player to revive others. Leave empty to allow all players. | **`@css/vip`** |
+| `CanBeRevivedFlag` | Permission needed to revive a player. Leave empty to allow reviving any dead teammate. | **`empty`** |
+| `ReviveTime` | Time (in seconds) a player must hold the USE key to complete the revive. | **`15`** |
+| `ReviveRange` | Maximum distance between the reviver and the corpse to allow reviving. | **`100.0f`** |
+| `MaxRevivesPerRound` | Maximum number of revives a player can perform per round. | **`1`** |
+
 ## 📜 Lang Configuration
 In the 'lang' folder, you'll find various files. For instance, 'es.json' is designated for the Spanish language. You're welcome to modify this file to better suit your style and language preferences. The language utilized depends on your settings in 'core.json' of CounterStrikeSharp.
 
-## TODO
-| Task                          | Status     | Description                                                                                              |
-|-------------------------------|------------|----------------------------------------------------------------------------------------------------------|
-| Hold "E" to revive            | Complete   | Implement the mechanic where the player must hold the "E" key over a body to revive a teammate.          |
-| Display revival timer in HUD  | Complete   | Show a countdown timer in the HUD indicating how much time is left for the revival process.              |
-| Limit revives to one per round| Complete   | Ensure a player can only revive one teammate per round.                                                  |
-| Fix known bugs                | Complete   | Resolve issues with message duplication caused by OnTick triggering repeatedly. Additionally, fix the bug where the "revival cancelled" message appears when holding "E" without actually reviving. |
-| Optimize and improve plugin logic | Pending | Optimize and enhance the plugin's logic to improve performance and efficiency.                           |
+## TO-DO  
+The list of upcoming tasks and features has been moved to a dedicated file. You can find it here: [TO-DO.md](TODO.md)  
+
 ## 💡 Credits
 - Thanks to [daffyyyy](https://github.com/daffyyyy) for the respawn function from their plugin [CS2-SimpleAdmin](https://github.com/daffyyyy/CS2-SimpleAdmin), which is used in this project.
 - Thanks to [zakriamansoor47](https://github.com/zakriamansoor47) for the beacon function from their plugin [SLAYER_Duel](https://github.com/zakriamansoor47/SLAYER_Duel), which is used in this project.
